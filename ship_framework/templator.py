@@ -12,6 +12,5 @@ def render(path, **kwargs):
 if __name__ == '__main__':
 
     goods = [{'name': f'Товар #{inx}', 'price': inx*100} for inx in range(1, 5)]
-
     print(render(path='test.html', title='Test title', goods=goods))
 

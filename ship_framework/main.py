@@ -1,4 +1,6 @@
+from quopri import decodestring
 from wsgiref.simple_server import make_server
+from .requests import GetRequests, PostRequests
 
 class Application:
 
@@ -22,7 +24,17 @@ class Application:
             view = self.not_found_404_views
 
         request = {}
-        self.add_request_info(request, self.fronts)
+        self.add_request_info(request, self.fronts)  # Добавляет в запрос доп. информацию
+        request['method'] = environ['REQUEST_METHOD']  # Добавляет в запрос метод
+
+        if request['method'] == 'POST':
+            data = PostRequests().get_request_params(environ)
+            request['data'] = self.decode_value(data)  # Перекодирование словаря в utf-8
+            print(f'Пришел POST-параметры: {data}')
+        elif request['method'] == 'GET':
+            data = GetRequests().get_request_params(environ)
+            request['request_params'] = self.decode_value(data)  # Перекодирование словаря в utf-8
+            print(f'Пришли GET-параметры: {data}')
 
         code, body = view(request)
 
@@ -38,4 +50,14 @@ class Application:
     def add_request_info(request, fronts=[]):
         for front in fronts:
             front(request)
+
+    @staticmethod
+    def decode_value(data):
+        """ Перекодирование словаря в utf-8 """
+        new_data = {}
+        for k, v in data.items():
+            val = bytes(replace('%', '=').replace("+", " "), 'UTF-8')
+            val_decode_str = decodestring(val).decode('UTF-8')
+            new_data[k] = val_decode_str
+        return new_data
 
