@@ -31,14 +31,16 @@ class Application:
         request['method'] = environ['REQUEST_METHOD']
 
         if request['method'] == 'POST':
-            data = PostRequests().get_request_params(environ)
+            data = PostRequests().get_data(environ)
+            params = PostRequests().get_request_params(environ)
             # Перекодирование словаря в utf-8
             request['data'] = self.decode_value(data)
+            request['request_params'] = self.decode_value(params)
             print(f'Пришел POST-параметры: {request["data"]}')
         elif request['method'] == 'GET':
-            data = GetRequests().get_request_params(environ)
+            params = GetRequests().get_request_params(environ)
             request['request_params'] = self.decode_value(
-                data)  # Перекодирование словаря в utf-8
+                params)  # Перекодирование словаря в utf-8
             print(f'Пришли GET-параметры: {request["request_params"] }')
 
         code, body = view(request)

@@ -1,0 +1,27 @@
+<div id="grey">
+<div class="container">
+	<div class="row">
+        <table class="table table-hover">
+            <thead>
+               <tr>
+                 <th scope="col">Родительская категория</th>
+                 <th scope="col">Наименование категории</th>
+               </tr>
+            </thead>
+            <tbody>
+                {% for category in categories_list %}
+                <tr>
+                  <td>{% if category.parent_category %}
+                      {{ category.parent_category.name }}
+                      {% else %}
+                      Главная категория
+                      {% endif %}
+                  </td>
+                  <td>{{ category.name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+	</div>
+</div>
+</div>
