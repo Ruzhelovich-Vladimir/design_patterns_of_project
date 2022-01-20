@@ -1,27 +1,38 @@
+from patterns.decorates import AppRoute, Debug
 from patterns.engine import Engine
 from ship_framework.templator import render
 
 templates_path = 'app/templates'
 
 site = Engine()
+routes = {}
 
 
+@AppRoute(routes, ['/', '/index'])
 class ViewIndex:
+    @Debug('Index')
     def __call__(self, request):
         return '200 OK', [render('index.html', templates_path).encode()]
 
 
+@AppRoute(routes, ['/work'])
 class ViewWork:
+    @Debug('Work')
     def __call__(self, request):
         return '200 OK', [render('work.html', templates_path).encode()]
 
 
+@AppRoute(routes, ['/about'])
 class ViewAbout:
+    @Debug('About')
     def __call__(self, request):
         return '200 OK', [render('about.html', templates_path).encode()]
 
 
+@AppRoute(routes, ['/Blog'])
 class ViewBlog:
+
+    @Debug('Blog')
     def __call__(self, request):
         blogs = [
             {
@@ -80,26 +91,33 @@ class ViewBlog:
                                  blogs=blogs).encode()]
 
 
+@AppRoute(routes, ['/contact'])
 class ViewContact:
+
+    @Debug('Contact')
     def __call__(self, request):
         return '200 OK', [render('contact.html', templates_path).encode()]
 
 
+@AppRoute(routes, ['/categories'])
 class ViewCategoryList:
     """
     Контроллер списка категорий
     """
 
+    @Debug('CategoryList')
     def __call__(self, request):
         return '200 OK', [render('categories.html', templates_path,
                                  categories_list=site.categories).encode()]
 
 
+@AppRoute(routes, ['/category_create'])
 class ViewCategoryCreate:
     """
     Контроллера создания категорий (оставил почти без изменения)
     """
 
+    @Debug('CategoryCreate')
     def __call__(self, request):
         if request['method'] == 'POST':
             # Получение данных
@@ -121,12 +139,11 @@ class ViewCategoryCreate:
                                      categories_list=site.categories).encode()]
         else:
             # Если запрос GET, то отправляем на страницу с формой пост запроса
-            print(site.categories)
-            categories_list = site.categories
             return '200 OK', [render('category_create.html', templates_path,
                                      categories_list=site.categories).encode()]
 
 
+@AppRoute(routes, ['/products'])
 class ViewProductList:
     """
     Контроллер списка продуктов
@@ -138,11 +155,13 @@ class ViewProductList:
                                  products_list=site.products).encode()]
 
 
+@AppRoute(routes, ['/product_create'])
 class ViewProductCreate:
     """
     Контроллера создания продукта (оставил почти без изменения)
     """
 
+    @Debug('ProductCreate')
     def __call__(self, request):
         if request['method'] == 'POST':
             # Получение данных
@@ -176,8 +195,11 @@ class ViewProductCreate:
                            categories_list=site.categories).encode()]
 
 
+@AppRoute(routes, ['/product_copy'])
 class ViewProductCopy:
     """ Контроллер копирования продукта """
+
+    @Debug('ProductCopy')
     def __call__(self, request):
         request_params = request['request_params']
         try:
@@ -194,6 +216,3 @@ class ViewProductCopy:
 
         except KeyError as err:
             print(err)
-            # return '200 OK', \
-            #        render('error.html',
-            #               error="Не возможно скопировать данный продукт")

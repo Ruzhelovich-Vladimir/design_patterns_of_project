@@ -1,4 +1,4 @@
-from app.urls import routes
+from app.views import routes
 from ship_framework.main import Application
 
 if __name__ == '__main__':
