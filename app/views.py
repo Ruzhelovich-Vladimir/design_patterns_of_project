@@ -1,17 +1,23 @@
-from patterns.decorates import AppRoute, Debug
-from patterns.engine import Engine
+from patterns.behavioral_patterns.observer import BaseSerializer
+from patterns.behavioral_patterns.template import ListView, CreateView
+from patterns.creational_patterns.logger import Logger
+
+from patterns.structural_patterns.decorates import AppRoute, Debug
+from patterns.creational_patterns.engine import Engine
 from ship_framework.templator import render
 
 templates_path = 'app/templates'
 
 site = Engine()
 routes = {}
+logger = Logger('main')
 
 
 @AppRoute(routes, ['/', '/index'])
 class ViewIndex:
     @Debug('Index')
     def __call__(self, request):
+        logger.log('Индексная страница')
         return '200 OK', [render('index.html', templates_path).encode()]
 
 
@@ -29,68 +35,6 @@ class ViewAbout:
         return '200 OK', [render('about.html', templates_path).encode()]
 
 
-@AppRoute(routes, ['/Blog'])
-class ViewBlog:
-
-    @Debug('Blog')
-    def __call__(self, request):
-        blogs = [
-            {
-                "author": "Stanley Stinson",
-                "date": "January 18, 2014",
-                "title": "The Amazing Spiderman",
-                "text": """
-              <b>Spider-Man</b> is a fictional character, a comic book
-              superhero that appears in comic books published by Marvel
-              Comics. Created by writer-editor Stan Lee and writer-artist
-              Steve Ditko, he first appeared in Amazing Fantasy #15
-              (cover-dated Aug. 1962).
-
-              Lee and Ditko conceived the character as an orphan being raised
-              by his Aunt May and Uncle Ben, and as a teenager, having to deal
-              with the normal struggles of adolescence in addition to those of
-              a costumed crimefighter.
-              """
-            },
-            {
-                "author": "Stanley Stinson",
-                "date": "January 18, 2014",
-                "title": "The Amazing Spiderman",
-                "text": """
-                      <b>Spider-Man</b> is a fictional character, a comic book
-                      superhero that appears in comic books published by
-                      Marvel Comics. Created by writer-editor Stan Lee and
-                      writer-artist Steve Ditko, he first appeared in Amazing
-                      Fantasy #15 (cover-dated Aug. 1962).
-                      Lee and Ditko conceived the character as an orphan being
-                      raised by his Aunt May and Uncle Ben, and as a teenager,
-                      having to deal with the normal struggles of adolescence
-                      in addition to those of a costumed crimefighter.
-                      """
-            },
-            {
-                "author": "Stanley Stinson",
-                "date": "January 18, 2014",
-                "title": "The Amazing Spiderman",
-                "text": """
-                      <b>Spider-Man</b> is a fictional character, a comic book
-                      superhero that appears in comic books published by
-                      Marvel Comics. Created by writer-editor Stan Lee and
-                      writer-artist Steve Ditko, he first appeared in Amazing
-                      Fantasy #15 (cover-dated Aug. 1962).
-                      Lee and Ditko conceived the character as an orphan
-                      being raised by his Aunt May and Uncle Ben, and as a
-                      teenager, having to deal with the normal struggles of
-                      adolescence in addition to those of a costumed
-                      crimefighter.
-                      """
-            }
-        ]
-
-        return '200 OK', [render('blog.html', templates_path,
-                                 blogs=blogs).encode()]
-
-
 @AppRoute(routes, ['/contact'])
 class ViewContact:
 
@@ -100,47 +44,87 @@ class ViewContact:
 
 
 @AppRoute(routes, ['/categories'])
-class ViewCategoryList:
+class ViewCategoryList(ListView):
     """
     Контроллер списка категорий
     """
+    queryset = site.categories
+    template_name = 'categories.html'
+    template_path = templates_path
 
-    @Debug('CategoryList')
-    def __call__(self, request):
-        return '200 OK', [render('categories.html', templates_path,
-                                 categories_list=site.categories).encode()]
+    def __init__(self):
+        logger.log('Список категорий')
+
+# class ViewCategoryList:
+#     """
+#     Контроллер списка категорий
+#     """
+#
+#     def __init__(self):
+#         logger.log('Индексная страница')
+#
+#     @Debug('CategoryList')
+#     def __call__(self, request):
+#         return '200 OK', [render('categories.html', templates_path,
+#                                  categories_list=site.categories).encode()]
 
 
 @AppRoute(routes, ['/category_create'])
-class ViewCategoryCreate:
+class ViewCategoryCreate(CreateView):
     """
     Контроллера создания категорий (оставил почти без изменения)
     """
+    template_name = 'category_create.html'
+    redirect_template_name = '/categories'
+    template_path = templates_path
 
-    @Debug('CategoryCreate')
-    def __call__(self, request):
-        if request['method'] == 'POST':
-            # Получение данных
-            data = request['data']
-            name = data['name']
-            name = site.decode_value(name)
+    def create_object(self, data: dict):
 
-            # Поиск родительской категории
-            category_id = int(data.get('parent_category_id'))
-            category = site.find_category_by_id(category_id) \
-                if category_id > -1 else None
+        # Наименование категории
+        name = data['name']
+        name = site.decode_value(name)
 
-            # Создаём новую категорию
-            new_category = site.create_category(name, category)
-            site.categories.append(new_category)
+        # Поиск родительской категории
+        category_id = int(data.get('parent_category_id'))
+        category = site.find_category_by_id(category_id) \
+            if category_id > -1 else None
 
-            # Отправляем пользователя на страницу со списком категорий
-            return '200 OK', [render('categories.html', templates_path,
-                                     categories_list=site.categories).encode()]
-        else:
-            # Если запрос GET, то отправляем на страницу с формой пост запроса
-            return '200 OK', [render('category_create.html', templates_path,
-                                     categories_list=site.categories).encode()]
+        # Создаём новую категорию
+        new_category = site.create_category(name, category)
+        site.categories.append(new_category)
+
+# class ViewCategoryCreate:
+#     """
+#     Контроллера создания категорий (оставил почти без изменения)
+#     """
+#
+#     def __init__(self):
+#         logger.log('Создание категории')
+#
+#     @Debug('CategoryCreate')
+#     def __call__(self, request):
+#         if request['method'] == 'POST':
+#             # Получение данных
+#             data = request['data']
+#             name = data['name']
+#             name = site.decode_value(name)
+#
+#             # Поиск родительской категории
+#             category_id = int(data.get('parent_category_id'))
+#             category = site.find_category_by_id(category_id) \
+#                 if category_id > -1 else None
+#
+#             # Создаём новую категорию
+#             new_category = site.create_category(name, category)
+#             site.categories.append(new_category)
+#
+#             # Отправляем пользователя на страницу со списком категорий
+#             return '200 OK', [render('categories.html', templates_path,
+#                                      categories_list=site.categories).encode()]
+#         else:
+#             # Если запрос GET, то отправляем на страницу с формой пост запроса
+#             return '200 OK', [render('category_create.html', templates_path,
+#                                      categories_list=site.categories).encode()]
 
 
 @AppRoute(routes, ['/products'])
@@ -149,10 +133,25 @@ class ViewProductList:
     Контроллер списка продуктов
     """
 
+    def __init__(self):
+        logger.log('Список продуктов')
+
     def __call__(self, request):
-        print()
         return '200 OK', [render('products.html', templates_path,
                                  products_list=site.products).encode()]
+
+
+@AppRoute(routes, ['/api'])
+class ViewProductListApi:
+    """
+    Прототип Get-запроса
+    """
+    def __init__(self):
+        logger.log('Get запрос списка продуктов')
+
+    @Debug('products_api')
+    def __call__(self, request):
+        return '200 OK', [BaseSerializer(site.products).save().encode()]
 
 
 @AppRoute(routes, ['/product_create'])
@@ -160,6 +159,8 @@ class ViewProductCreate:
     """
     Контроллера создания продукта (оставил почти без изменения)
     """
+    def __init__(self):
+        logger.log('Создание продукта')
 
     @Debug('ProductCreate')
     def __call__(self, request):
@@ -198,6 +199,8 @@ class ViewProductCreate:
 @AppRoute(routes, ['/product_copy'])
 class ViewProductCopy:
     """ Контроллер копирования продукта """
+    def __init__(self):
+        logger.log('Копирование продукта')
 
     @Debug('ProductCopy')
     def __call__(self, request):

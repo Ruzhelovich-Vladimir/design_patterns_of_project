@@ -5,6 +5,8 @@ from .requests import GetRequests, PostRequests
 
 class Application:
 
+    environ = {}
+
     def __init__(self, routes, fronts):
         self.routes = routes
         self.fronts = fronts
@@ -16,8 +18,12 @@ class Application:
             print(f'Server is starting on port {url}...')
             httpd.serve_forever()
 
+    def redirect(self, path):
+        self.environ["PATH_INFO"] = path
+
     def __call__(self, environ, start_response):
 
+        self.environ = environ  # Сохраняем для отправки на другую страницу
         path = environ["PATH_INFO"]
         if path in self.routes:
             view = self.routes[path]
@@ -49,12 +55,11 @@ class Application:
         return body
 
     @staticmethod
-    def not_found_404_views(request):
-        # print(request)
+    def not_found_404_views():
         return '404 WHAT', [b'404 PAGE Not Found']
 
     @staticmethod
-    def add_request_info(request, fronts=[]):
+    def add_request_info(request, fronts: list):
         for front in fronts:
             front(request)
 

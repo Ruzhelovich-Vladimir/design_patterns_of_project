@@ -6,6 +6,9 @@ from copy import deepcopy
 
 
 # ПАТТЕРН -АБСТРАКТНЫЙ КЛАССА
+from patterns.behavioral_patterns.observer import ObservationSubject
+
+
 class BPObject:
     """
     Абстрактный объект бизнес партнёров
@@ -55,12 +58,13 @@ class BPObjectFactory:
 
 
 # ПОРОЖДАЮЩИЙ ПАТТЕРН -  ПРОТОТИП
-class ProductPrototype:
+class ProductPrototype(ObservationSubject):
     """
     Прототип продукта - товара/услуги
     """
 
     def clone(self):
+        self.notify('скопирован')
         return deepcopy(self)
 
 
@@ -71,6 +75,7 @@ class Product(ProductPrototype):
     auto_id = 0
 
     def __init__(self, **kwargs):
+
         self.id = Product.auto_id
         Product.auto_id += 1
         if 'name' not in kwargs:
@@ -89,22 +94,26 @@ class Product(ProductPrototype):
         return f'{self.category.name}/{self.name} - {self.price}'
 
 
-class Service(Product):
+class Service(Product, ObservationSubject):
     """
     Класс сервиса
     """
-    # def __init__(self, **kwargs):
-    #     super().__init__(**kwargs)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.notify('добавлен')
 
     def __str__(self):
         return f'Услуга: {self.category.name}/{self.name} - {self.price}'
 
 
-class Good(Product):
+class Good(Product, ObservationSubject):
     """
     Класс товара
     """
+
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if 'wight' not in kwargs:
             raise Exception('Нет атрибута wight')
         elif 'volume' not in kwargs:
@@ -112,6 +121,7 @@ class Good(Product):
         super().__init__(**kwargs)
         self.wight = kwargs['wight']
         self.volume = kwargs['volume']
+        self.notify('добавлен')
 
     def __str__(self):
         return f'Товар: {self.category.name}/{self.name} вес:{self.wight}, ' \
@@ -144,7 +154,7 @@ class ProductFactory:
                 if not attr.startswith('__')]
 
 
-class Category:
+class Category(ObservationSubject):
     """
     Класс категории
     """
@@ -154,12 +164,13 @@ class Category:
         """
         Добавляет новую категорию
         """
-
+        super().__init__()
         self.id = Category.auto_id
         Category.auto_id += 1
         self.name = name
         self.parent_category = parent_category
         self.products = []
+        self.notify('добавлен')
 
     @property
     def parent_category_name(self):

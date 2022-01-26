@@ -9,7 +9,7 @@
                </tr>
             </thead>
             <tbody>
-                {% for category in categories_list %}
+                {% for category in objects_list %}
                 <tr>
                   <td>{% if category.parent_category %}
                       {{ category.parent_category.name }}
