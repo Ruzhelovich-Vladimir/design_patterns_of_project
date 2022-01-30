@@ -1,3 +1,7 @@
+from patterns.architectural_system_pattern_unit_of_work.mappers_sqlite import \
+    MapperRegistry
+from patterns.architectural_system_pattern_unit_of_work.unit_of_work import \
+    UnitOfWork
 from patterns.behavioral_patterns.observer import BaseSerializer
 from patterns.behavioral_patterns.template import ListView, CreateView
 from patterns.creational_patterns.logger import Logger
@@ -12,6 +16,12 @@ site = Engine()
 routes = {}
 logger = Logger('main')
 
+UnitOfWork.new_current()
+UnitOfWork.get_current().set_mapper_registry(MapperRegistry)
+
+mapper = MapperRegistry.get_current_mapper('category')
+site.categories = mapper.all()
+pass
 
 @AppRoute(routes, ['/', '/index'])
 class ViewIndex:
@@ -55,6 +65,10 @@ class ViewCategoryList(ListView):
     def __init__(self):
         logger.log('Список категорий')
 
+    def get_queryset(self):
+        mapper = MapperRegistry.get_current_mapper('category')
+        return mapper.all()
+
 # class ViewCategoryList:
 #     """
 #     Контроллер списка категорий
@@ -78,6 +92,11 @@ class ViewCategoryCreate(CreateView):
     redirect_template_name = '/categories'
     template_path = templates_path
 
+    def get_context_data(self):
+        mapper = MapperRegistry.get_current_mapper('category')
+        context = {'categories_list': mapper.all()}
+        return context
+
     def create_object(self, data: dict):
 
         # Наименование категории
@@ -86,12 +105,19 @@ class ViewCategoryCreate(CreateView):
 
         # Поиск родительской категории
         category_id = int(data.get('parent_category_id'))
-        category = site.find_category_by_id(category_id) \
-            if category_id > -1 else None
+        if category_id > -1:
+            category = site.find_category_by_id(category_id)
+        else:
+            category = None
 
         # Создаём новую категорию
         new_category = site.create_category(name, category)
         site.categories.append(new_category)
+
+        # Добавляем запись с базу
+        new_category.mark_insert()
+        UnitOfWork.get_current().commit()
+
 
 # class ViewCategoryCreate:
 #     """
@@ -178,6 +204,10 @@ class ViewProductCreate:
             new_product = site.create_product(product_type, **data)
             site.products.append(new_product)
 
+            # Добавляем запись с базу
+            new_product.mark_new()
+            UnitOfWork.get_current().commit()
+
             # Отправляем пользователя на страницу со списком категорий
             return '200 OK', [render('products.html', templates_path,
                                      products_list=site.products).encode()]
@@ -213,6 +243,9 @@ class ViewProductCopy:
                 new_product = product.clone()
                 new_product.name = new_name
                 site.products.append(new_product)
+                # Добавляем запись с базу
+                new_product.mark_new()
+                UnitOfWork.get_current().commit()
 
             return '200 OK', [render('products.html', templates_path,
                                      products_list=site.products).encode()]

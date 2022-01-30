@@ -6,6 +6,8 @@ from copy import deepcopy
 
 
 # ПАТТЕРН -АБСТРАКТНЫЙ КЛАССА
+from patterns.architectural_system_pattern_unit_of_work.unit_of_work import \
+    DomainObject
 from patterns.behavioral_patterns.observer import ObservationSubject
 
 
@@ -68,7 +70,7 @@ class ProductPrototype(ObservationSubject):
         return deepcopy(self)
 
 
-class Product(ProductPrototype):
+class Product(ProductPrototype, DomainObject):
     """
     Класс продукта - товара/услуги
     """
@@ -154,7 +156,7 @@ class ProductFactory:
                 if not attr.startswith('__')]
 
 
-class Category(ObservationSubject):
+class Category(DomainObject, ObservationSubject):
     """
     Класс категории
     """
@@ -182,7 +184,8 @@ class Category(ObservationSubject):
 
     def __str__(self):
         if self.parent_category:
-            return f'{self.parent_category.name}/{self.name}'
+            # return f'{self.parent_category.name}/{self.name}'
+            return f'{self.parent_category}/{self.name}'
         else:
             return f'Главная категория/{self.name}'
 

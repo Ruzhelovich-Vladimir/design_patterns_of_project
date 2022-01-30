@@ -2,7 +2,8 @@
 Модуль движка
 """
 from quopri import decodestring
-from patterns.creational_patterns.models import BPObjectFactory, ProductFactory, Category
+from patterns.creational_patterns.models import ProductFactory, Category, \
+    BPObjectFactory
 
 
 class Engine:
